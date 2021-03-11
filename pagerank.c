@@ -4,7 +4,7 @@
 
 #include "graph.h"
 
-#define LINE_SIZE 50
+#define LINE_SIZE 100
 
 void read_csv(char *filename, graph_t *g);
 void write_csv(char *filename, graph_t *g);

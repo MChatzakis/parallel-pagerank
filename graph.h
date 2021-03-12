@@ -35,7 +35,7 @@ graph_t *graph_initialize(double init_score)
     g = (graph_t *)malloc(sizeof(graph_t));
     if (!g)
     {
-        perror("Could not alocate memory for the graph");
+        perror("Could not allocate memory for the graph");
         exit(EXIT_FAILURE);
     }
 
@@ -44,6 +44,58 @@ graph_t *graph_initialize(double init_score)
     g->size = 0;
 
     return g;
+}
+
+
+
+node_t *graph_add_link_eff(graph_t *g, long from, long to)
+{
+    node_t *curr, *prev, *node;
+
+    assert(g);
+
+    curr = g->head;
+    prev = NULL;
+
+    while (curr != NULL && curr->id <= id)
+    {
+        if (curr->id == id)
+        {
+            g->size++;
+            //ad link
+            return curr;
+        }
+
+        prev = curr;
+        curr = curr->next;
+    }
+
+    node = (node_t *)malloc(sizeof(node_t));
+
+    node->id = id;
+    node->next = curr;
+    node->score = g->initial_score;
+    node->out_links_num = 0;
+    node->outlinks_head = NULL;
+
+    g->size++;
+
+    if (prev == NULL)
+    {
+        g->head = node;
+
+        return g->head;
+    }
+    /*else if (curr == g->head)
+    {
+
+    }*/
+    else
+    {
+        prev->next = node;
+    }
+
+    return node;
 }
 
 node_t *graph_add_node(graph_t *g, long id)

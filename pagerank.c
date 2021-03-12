@@ -6,67 +6,89 @@
 #include "graph.h"
 
 #define LINE_SIZE 100
-#define THREAD_NUM 10
+#define THREADS_NUM 2
 #define D_FACTOR 0.85
+#define ITERATIONS 50
+#define DEBUG 0
 
 typedef struct thread_data
 {
-    node_t *from;
-    node_t *to;
+    long from;
+    long to;
 } thread_data;
 
-pthread_t threads[THREAD_NUM];
-thread_data data[THREAD_NUM];
+pthread_mutex_t mutex;
+pthread_attr_t attr;
 
-void read_csv(char *filename, graph_t *g);
+pthread_t threads[THREADS_NUM];
+thread_data data[THREADS_NUM];
+
+graph_t *read_file(char *filename);
+void *pagerank_calculate(void *arg);
 void write_csv(char *filename, graph_t *g);
 
-void *calculate_pagerank(void *arg);
-
-int main(int argc, char **argv)
+int main()
 {
     graph_t *g;
-    node_t *from, *to, *iter;
-    char *filename = "datasets/enron.txt";
-    double d_factor = 0.85, init_pr = 1.0;
-    int border = 0, i, counter = 0;
+    long i, sets = 0, from = 0, to = 0;
 
-    g = graph_initialize(init_pr);
+    g = read_file("datasets/enron.txt");
+    sets = g->size / THREADS_NUM;
 
-    /*iter = g->head;
-    for (i = 0; i < THREAD_NUM; i++)
+    pthread_mutex_init(&mutex, NULL);
+
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    for (i = 0; i < THREADS_NUM; i++)
     {
-        border = (g->size) / THREAD_NUM;
-        from = iter;
-        while (iter != NULL && counter < border)
-        {
-            iter = iter->next;
-        }
-        to = iter;
-        //find borders ...
+        from = i * sets;
+        to = (i + 1) * sets;
         data[i].from = from;
         data[i].to = to;
-        pthread_create(&threads[i], NULL, calculate_pagerank, (void *)data[i]);
     }
 
-    for (i = 0; i < THREAD_NUM; i++)
+    if ((sets = g->size % THREADS_NUM) > 0)
+    {
+        data[THREADS_NUM - 1].to = g->size;
+    }
+
+    for (i = 0; i < THREADS_NUM; i++)
+    {   
+        //printf("Thread %ld takes %ld to %ld.\n", i, data[i].from, data[i].to);
+        pthread_create(&threads[i], NULL, pagerank_calculate, &data[i]);
+    }
+
+    for (i = 0; i < THREADS_NUM; i++)
     {
         pthread_join(threads[i], NULL);
     }
-    */
-    read_csv(filename, g);
 
-    //graph_print_nodes(g);
-    //write_csv("pagerank.csv", g);
-
+    //graph_print(g, stdout);
+    write_csv("pagerank.csv", g);
     return 0;
 }
 
-void read_csv(char *filename, graph_t *g)
+void write_csv(char *filename, graph_t *g)
 {
     FILE *stream;
+    if (!(stream = fopen(filename, "w+")))
+    {
+        perror("Could not open the file");
+        exit(EXIT_FAILURE);
+    }
+
+    graph_csv(g, stream);
+
+    fclose(stream);
+}
+
+graph_t *read_file(char *filename)
+{
+    FILE *stream;
+    graph_t *g;
     char line[LINE_SIZE], *tok;
-    long from, to;
+    long from, to, size = 0;
     int counter = 0;
 
     if (!(stream = fopen(filename, "r+")))
@@ -75,7 +97,7 @@ void read_csv(char *filename, graph_t *g)
         exit(EXIT_FAILURE);
     }
 
-    while ((fgets(line, LINE_SIZE, stream)) != NULL) // && counter < 20)
+    while ((fgets(line, LINE_SIZE, stream)) != NULL)
     {
         if (line[0] == '#')
         {
@@ -85,33 +107,51 @@ void read_csv(char *filename, graph_t *g)
         tok = strtok(line, "\r \t\v");
         from = atol(tok);
 
-        //printf("From %ld", from);
-        //printf("From %s ", tok);
+        if (size < from)
+        {
+            size = from;
+        }
 
         tok = strtok(NULL, "\r \t\v");
         to = atol(tok);
+        if (size < to)
+        {
+            size = to;
+        }
+    }
+    size++;
+    printf("Nodes: %ld\n", size);
 
-        //printf(" to %ld\n", to);
-        //printf("To %s\n", tok);
+    g = graph_initialize(1.0, size);
 
+    rewind(stream);
+
+    while ((fgets(line, LINE_SIZE, stream)) != NULL)
+    {
+        if (line[0] == '#')
+        {
+            continue;
+        }
+
+        tok = strtok(line, "\r \t\v");
+        from = atol(tok);
+        //printf("From %ld to ", from);
+
+        tok = strtok(NULL, "\r \t\v");
+        to = atol(tok);
+        //printf("%ld\n", to);
         graph_add_link(g, from, to);
-        counter++;
     }
 
     fclose(stream);
+    return g;
 }
 
-void write_csv(char *filename, graph_t *g)
+void *pagerank_calculate(void *arg)
 {
-    FILE *stream;
+    thread_data *data = (thread_data *)arg;
 
-    if (!(stream = fopen(filename, "w+")))
-    {
-        perror("Could not open the file");
-        exit(EXIT_FAILURE);
-    }
+    printf("Managing from: %ld to %ld.\n", data->from, data->to);
 
-    graph_output(g, stream);
-
-    fclose(stream);
+    return NULL;
 }

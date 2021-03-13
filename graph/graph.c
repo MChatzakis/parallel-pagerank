@@ -1,29 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
-typedef struct link_t
-{
-    long to_id;
-    struct link_t *next;
-} link_t;
-
-typedef struct node_t
-{
-    long id;
-    long outlinks_num;
-
-    long *outlinks;
-    link_t *outlinks_head;
-
-    double score;
-} node_t;
-
-typedef struct graph_t
-{
-    long size;
-    node_t *nodes;
-} graph_t;
+#include "graph.h"
 
 graph_t *graph_initialize(double starting_score, long size)
 {
@@ -50,7 +25,8 @@ graph_t *graph_initialize(double starting_score, long size)
         g->nodes[i].id = i;
         g->nodes[i].outlinks = 0;
         g->nodes[i].score = starting_score;
-        //g->nodes[i].outlinks = (long *)malloc((size - 1) * sizeof(long));
+        g->nodes[i].score_next = starting_score;
+        g->nodes[i].outlinks = NULL;
     }
 
     return g;
@@ -153,6 +129,7 @@ void graph_csv(graph_t *g, FILE *stream)
     assert(g && g->nodes);
 
     nodes = g->nodes;
+    fprintf(stream, "node,pagerank\n");
     for (i = 0; i < g->size; i++)
     {
         fprintf(stream, "%ld,", nodes[i].id);

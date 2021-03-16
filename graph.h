@@ -2,246 +2,204 @@
 #include <stdlib.h>
 #include <assert.h>
 
-struct link_t;
+typedef struct link_t
+{
+    long from_node_index;
+    long from_node_id;
+
+    long to_node_index;
+    long to_node_id;
+
+    double transfer_score; //This is used only for incoming links!
+
+    struct link_t *next;
+} link_t;
 
 typedef struct node_t
 {
     long id;
-    long out_links_num;
-
     double score;
 
-    struct link_t *outlinks_head;
-    struct node_t *next;
-} node_t;
+    long outlinks_num;
+    link_t *outlinks_head;
 
-typedef struct link_t
-{
-    struct node_t *node;
-    struct link_t *next;
-} link_t;
+    long inclinks_num;
+    link_t *inclinks_head;
+} node_t;
 
 typedef struct graph_t
 {
     long size;
-    double initial_score;
-    node_t *head;
+    double init_score;
+
+    node_t *nodes;
 } graph_t;
 
-graph_t *graph_initialize(double init_score)
+graph_t *graph_init(long max_size, double init_score)
 {
     graph_t *g;
+    long i;
 
     g = (graph_t *)malloc(sizeof(graph_t));
-    if (!g)
-    {
-        perror("Could not allocate memory for the graph");
-        exit(EXIT_FAILURE);
-    }
 
-    g->head = NULL;
-    g->initial_score = init_score;
+    /* Max size is 2*edges, as known from graph theory */
+    g->nodes = (node_t *)malloc(max_size * sizeof(node_t));
     g->size = 0;
-
+    g->init_score = init_score;
     return g;
 }
 
-
-
-node_t *graph_add_link_eff(graph_t *g, long from, long to)
+node_t *graph_add_link(graph_t *g, long from, long to)
 {
-    node_t *curr, *prev, *node;
-
-    assert(g);
-
-    curr = g->head;
-    prev = NULL;
-
-    while (curr != NULL && curr->id <= id)
-    {
-        if (curr->id == id)
-        {
-            g->size++;
-            //ad link
-            return curr;
-        }
-
-        prev = curr;
-        curr = curr->next;
-    }
-
-    node = (node_t *)malloc(sizeof(node_t));
-
-    node->id = id;
-    node->next = curr;
-    node->score = g->initial_score;
-    node->out_links_num = 0;
-    node->outlinks_head = NULL;
-
-    g->size++;
-
-    if (prev == NULL)
-    {
-        g->head = node;
-
-        return g->head;
-    }
-    /*else if (curr == g->head)
-    {
-
-    }*/
-    else
-    {
-        prev->next = node;
-    }
-
-    return node;
-}
-
-node_t *graph_add_node(graph_t *g, long id)
-{
-    node_t *curr, *prev, *node;
-
-    assert(g);
-
-    curr = g->head;
-    prev = NULL;
-
-    while (curr != NULL && curr->id <= id)
-    {
-        if (curr->id == id)
-        {
-            g->size++;
-            return curr;
-        }
-
-        prev = curr;
-        curr = curr->next;
-    }
-
-    node = (node_t *)malloc(sizeof(node_t));
-
-    node->id = id;
-    node->next = curr;
-    node->score = g->initial_score;
-    node->out_links_num = 0;
-    node->outlinks_head = NULL;
-
-    g->size++;
-
-    if (prev == NULL)
-    {
-        g->head = node;
-
-        return g->head;
-    }
-    /*else if (curr == g->head)
-    {
-
-    }*/
-    else
-    {
-        prev->next = node;
-    }
-
-    return node;
-}
-
-link_t *graph_add_link(graph_t *g, long from, long to)
-{
-    node_t *from_node, *to_node;
+    short from_exists = 0, to_exists = 0;
+    long i, from_index, to_index; //check -1!!!!!
+    node_t *nodes;
     link_t *curr, *prev, *link;
 
     assert(g);
 
-    if (from == to)
+    nodes = g->nodes;
+    for (i = 0; i < g->size; i++)
     {
-        printf("samee\n");
-        return NULL;
+        if (nodes[i].id == from)
+        {
+            from_exists = 1;
+            from_index = i;
+        }
+
+        if (nodes[i].id == to)
+        {
+            to_exists = 1;
+            to_index = i;
+        }
+
+        if (from_exists && to_exists)
+        {
+            break; //Speedup operation
+        }
     }
 
-    if (!(from_node = graph_add_node(g, from)))
+    if (!from_exists)
     {
-        perror("Could not locate the node");
-        exit(EXIT_FAILURE);
+        nodes[g->size].id = from;
+        nodes[g->size].score = g->init_score;
+        nodes[g->size].outlinks_num = 0;
+        nodes[g->size].inclinks_num = 0;
+        nodes[g->size].outlinks_head = NULL;
+        nodes[g->size].inclinks_head = NULL;
+
+        from_index = g->size;
+        g->size++;
     }
 
-    if (!(to_node = graph_add_node(g, to)))
+    if (!to_exists)
     {
-        perror("Could not locate the node");
-        exit(EXIT_FAILURE);
+        nodes[g->size].id = to;
+        nodes[g->size].score = g->init_score;
+        nodes[g->size].outlinks_num = 0;
+        nodes[g->size].inclinks_num = 0;
+        nodes[g->size].outlinks_head = NULL;
+        nodes[g->size].inclinks_head = NULL;
+
+        to_index = g->size;
+        g->size++;
     }
 
-    curr = from_node->outlinks_head;
+    //at this point, the 2 nodes are nodes[from_index] and nodes[to_index]
+
+    //add outgoing link to from_index
+    curr = nodes[from_index].outlinks_head;
     prev = NULL;
-
     while (curr != NULL)
     {
-        if ((curr->node)->id == to)
-        {
-            return curr;
-        }
         prev = curr;
         curr = curr->next;
     }
 
     link = (link_t *)malloc(sizeof(link_t));
-    link->next = curr;
-    link->node = to_node;
+    link->from_node_id = from;
+    link->from_node_index = from_index;
+    link->to_node_id = to;
+    link->to_node_index = to_index;
+    link->transfer_score = 0.0; //This wont be used anyways
+    link->next = NULL;
 
     if (prev == NULL)
     {
-        from_node->outlinks_head = link;
+        nodes[from_index].outlinks_head = link;
     }
     else
     {
         prev->next = link;
     }
 
-    from_node->out_links_num++;
+    nodes[from_index].outlinks_num++;
 
-    return link;
+    /////////////////////////////////////////////
+    //adding to node_to the various stuff..
+    curr = nodes[to_index].inclinks_head;
+    prev = NULL;
+    while (curr != NULL)
+    {
+        prev = curr;
+        curr = curr->next;
+    }
+
+    link = (link_t *)malloc(sizeof(link_t));
+    link->from_node_id = from;
+    link->from_node_index = from_index;
+    link->to_node_id = to;
+    link->to_node_index = to_index;
+    link->transfer_score = 0.0;
+    link->next = NULL;
+
+    if (prev == NULL)
+    {
+        nodes[to_index].inclinks_head = link;
+    }
+    else
+    {
+        prev->next = link;
+    }
+
+    nodes[to_index].inclinks_num++;
+
+    return nodes;
 }
 
-void graph_print_nodes(graph_t *g)
+void graph_print(graph_t *g)
 {
-    node_t *curr;
+    node_t *nodes;
     link_t *link;
+    long i;
 
     assert(g);
 
-    curr = g->head;
+    nodes = g->nodes;
 
-    printf("---Graph consisting of %ld nodes---\n", g->size);
-
-    while (curr)
+    printf("Graph of %ld nodes.\n", g->size);
+    for (i = 0; i < g->size; i++)
     {
-        printf("Node %ld\n", curr->id);
-        printf("    Pagerank: %.2f\n", curr->score);
-        printf("    Out Deegree: %ld\n      =>[ ", curr->out_links_num);
-        link = curr->outlinks_head;
+        printf("Node ID: %ld\n", nodes[i].id);
+        printf("    Pagerank: %f\n", nodes[i].score);
+        printf("    Outdegree: %ld\n        => [ ", nodes[i].outlinks_num);
+        link = nodes[i].outlinks_head;
         while (link != NULL)
         {
-            printf("%ld ", link->node->id);
+            //printf("%ld ", link->to_node->id);
+            printf("%ld ", nodes[link->to_node_index].id);
             link = link->next;
         }
         printf("]\n");
-        curr = curr->next;
-    }
-}
 
-void graph_output(graph_t *g, FILE *stream)
-{
-    node_t *curr;
-    link_t *link;
-
-    assert(g);
-
-    curr = g->head;
-
-    while (curr)
-    {
-        fprintf(stream, "%ld,%.2f\n", curr->id, curr->score);
-        curr = curr->next;
+        printf("    Incdegree: %ld\n        => [ ", nodes[i].inclinks_num);
+        link = nodes[i].inclinks_head;
+        while (link != NULL)
+        {
+            //printf("%ld ", link->to_node->id);
+            printf("%ld ", nodes[link->from_node_index].id);
+            link = link->next;
+        }
+        printf("]\n");
     }
 }

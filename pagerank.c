@@ -2,12 +2,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "graph.h"
 
 #define LINE_SIZE 100
 #define ITERATIONS 50
-#define THREADS_NUM 1
+#define THREADS_NUM 4
 #define DEBUG 1
 #define D_FACTOR 0.85
 #define INIT_SCORE 1.0
@@ -25,17 +26,35 @@ pthread_barrier_t bar;
 
 graph_t *g;
 
-double pagerank_link_sum(link_t *head);
 void pagerank();
 void read_file(char *filename);
+void write_file(char *filename);
 void *pagerank_calculate(void *arg);
+double pagerank_link_sum(link_t *head);
 
-int main()
+int main(int argc, char **argv)
 {
-    read_file("datasets/enron.txt");
+    int opt;
+    char *input_filename;
+    char *output_filename = "pagerank.csv";
+
+    while ((opt = getopt(argc, argv, "f:")) != -1)
+    {
+        switch (opt)
+        {
+        case 'f':
+            input_filename = strdup(optarg);
+            break;
+        default:
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    read_file(input_filename);
+
     pagerank();
 
-    graph_print(g);
+    write_file(output_filename);
     return 0;
 }
 
@@ -62,6 +81,8 @@ void pagerank()
     {
         pthread_join(threads[i], NULL);
     }
+
+    //graph_print(g);
 }
 
 void *pagerank_calculate(void *arg)
@@ -70,39 +91,31 @@ void *pagerank_calculate(void *arg)
     node_t *nodes, *neigh;
     link_t *curr, *n_curr;
     double score;
-    long i, j, to_node_index;
+    long i, j, from_index;
 
     data = (thread_data_t *)arg;
     nodes = g->nodes;
 
-    printf("Thread handling node[%ld] to node[%ld] started!.\n", data->from, data->to - 1);
+    //printf("Thread handling node[%ld] to node[%ld] started!.\n", data->from, data->to - 1);
 
     for (j = 0; j < ITERATIONS; j++)
     {
         for (i = data->from; i < data->to; i++)
         {
-            if (nodes[i].outlinks_num == 0)
-            {
-                continue;
-            }
+            //printf("Node %ld:\n", nodes[i].id);
 
-            score = nodes[i].score * D_FACTOR / nodes[i].outlinks_num;
-            //printf("Current node: %ld\n", nodes[i].id);
-            curr = nodes[i].outlinks_head;
+            curr = nodes[i].inclinks_head;
             while (curr != NULL)
             {
-                //printf("--Link to node %ld\n", nodes[curr->to_node_index].id);
-                to_node_index = curr->to_node_index;
-                n_curr = nodes[to_node_index].inclinks_head;
-                while (n_curr != NULL)
-                {
-                    if (n_curr->from_node_id == nodes[i].id)
-                    {
-                        n_curr->transfer_score = score;
-                        break;
-                    }
-                    n_curr = n_curr->next;
-                }
+                //printf("Link from %ld to %ld\n", nodes[curr->from_node_index].id, nodes[curr->to_node_index].id);
+
+                from_index = curr->from_node_index;
+
+                if (nodes[from_index].outlinks_num != 0)
+                    curr->transfer_score = nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
+                else
+                    curr->transfer_score = 0;
+
                 curr = curr->next;
             }
         }
@@ -119,8 +132,6 @@ void *pagerank_calculate(void *arg)
         }
         pthread_barrier_wait(&bar);
     }
-
-    pthread_exit(NULL);
 }
 
 double pagerank_link_sum(link_t *head)
@@ -188,5 +199,21 @@ void read_file(char *filename)
     if (DEBUG)
         printf("Total nodes: %ld\n", g->size);
 
+    fclose(stream);
+}
+
+void write_file(char *filename)
+{
+    FILE *stream;
+
+    if (!(stream = fopen(filename, "w+")))
+    {
+        perror("Could not open the file");
+        exit(EXIT_FAILURE);
+    }
+
+    graph_csv(g, stream);
+
+    printf("File saved: \"%s\".\n", filename);
     fclose(stream);
 }

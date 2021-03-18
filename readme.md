@@ -5,7 +5,7 @@ Manos Chatzakis (csd4238@csd.uoc.gr)
 To compile the program you can use "make", supposing makefile and pagerank.c are in the same directory.
 
 ### Run:
-To run the program, you may use the following pattern:
+To run the program, you may use the following pattern: \\
 $ ./pagerank -f "your_dataset.txt"
 And to measure the time:
 $ time ./pagerank -f "your_dataset.txt"

@@ -6,9 +6,10 @@ To compile the program you can use "make", supposing makefile and pagerank.c are
 
 ### Run:
 To run the program, you may use the following pattern: \
-$ ./pagerank -f "your_dataset.txt" \
+$ ./page_rank -f "your_dataset.txt" \
 And to measure the time: \
-$ time ./pagerank -f "your_dataset.txt"
+$ time ./page_rank -f "your_dataset.txt" \
+(Other make commands: make + {run, gcc, clean})
 
 ### Selecting the threads:
 You can change the "#define THREADS_NUM N" at the top of pagerank.c file.

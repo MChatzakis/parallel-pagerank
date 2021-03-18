@@ -4,11 +4,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "graph.h"
+#include "graph/graph.h"
 
 #define LINE_SIZE 100
 #define ITERATIONS 50
-#define THREADS_NUM 4
+#define THREADS_NUM 3
 #define DEBUG 1
 #define D_FACTOR 0.85
 #define INIT_SCORE 1.0
@@ -55,6 +55,7 @@ int main(int argc, char **argv)
     pagerank();
 
     write_file(output_filename);
+
     return 0;
 }
 
@@ -82,7 +83,7 @@ void pagerank()
         pthread_join(threads[i], NULL);
     }
 
-    //graph_print(g);
+    graph_print(g);
 }
 
 void *pagerank_calculate(void *arg)

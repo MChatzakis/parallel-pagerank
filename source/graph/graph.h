@@ -36,3 +36,4 @@ graph_t *graph_init(long max_size, double init_score);
 node_t *graph_add_link(graph_t *g, long from, long to);
 void graph_csv(graph_t *g, FILE *stream);
 void graph_print(graph_t *g);
+void graph_free(graph_t *g);

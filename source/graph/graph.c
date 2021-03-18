@@ -175,3 +175,41 @@ void graph_print(graph_t *g)
         printf("]\n");
     }
 }
+
+void graph_free(graph_t *g)
+{
+    node_t *nodes;
+    link_t *f_link, *link;
+    long i;
+
+    assert(g);
+
+    nodes = g->nodes;
+    for (i = 0; i < g->size; i++)
+    {
+        link = nodes[i].inclinks_head;
+        while (link != NULL)
+        {
+            f_link = link;
+            link = link->next;
+            free(f_link);
+        }
+
+        nodes[i].inclinks_head = NULL;
+
+        link = nodes[i].outlinks_head;
+        while (link != NULL)
+        {
+            f_link = link;
+            link = link->next;
+            free(f_link);
+        }
+
+        nodes[i].outlinks_head = NULL;
+    }
+
+    free(g->nodes);
+    g->nodes = NULL;
+
+    free(g);
+}

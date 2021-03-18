@@ -8,7 +8,7 @@
 
 #define LINE_SIZE 100
 #define ITERATIONS 50
-#define THREADS_NUM 3
+#define THREADS_NUM 4
 #define DEBUG 1
 #define D_FACTOR 0.85
 #define INIT_SCORE 1.0
@@ -59,6 +59,7 @@ int main(int argc, char **argv)
 
     write_file(output_filename);
 
+    free(input_filename);
     free_all();
 
     return 0;
@@ -88,7 +89,7 @@ void pagerank()
         pthread_join(threads[i], NULL);
     }
 
-    graph_print(g);
+    //graph_print(g);
 }
 
 void *pagerank_calculate(void *arg)
@@ -157,6 +158,7 @@ double pagerank_link_sum(link_t *head)
 
 void free_all(){
     pthread_barrier_destroy(&bar);
+    graph_free(g);
 }
 
 void read_file(char *filename)

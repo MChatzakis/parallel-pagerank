@@ -1,6 +1,16 @@
 # Pagerank: A Parallel Approach
 Manos Chatzakis (csd4238@csd.uoc.gr)
 
+The folder is organizes as follows:
+
+Pagerank    
+    |---|
+        |-source/ Contains the source code files and the input datasets
+        |
+        |-report/ Contains the report of the approach
+        |
+        |-readme.md/ The readme file
+
 ### Compilation:
 To compile the program you can use "make", supposing makefile and pagerank.c are in the same directory.
 

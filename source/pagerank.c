@@ -29,6 +29,7 @@ graph_t *g;
 void pagerank();
 void read_file(char *filename);
 void write_file(char *filename);
+void free_all();
 void *pagerank_calculate(void *arg);
 double pagerank_link_sum(link_t *head);
 
@@ -38,13 +39,15 @@ int main(int argc, char **argv)
     char *input_filename;
     char *output_filename = "pagerank.csv";
 
-    while ((opt = getopt(argc, argv, "f:")) != -1)
+    while ((opt = getopt(argc, argv, "f:h")) != -1)
     {
         switch (opt)
         {
         case 'f':
             input_filename = strdup(optarg);
             break;
+        case 'h':
+            return 0;    
         default:
             exit(EXIT_FAILURE);
         }
@@ -55,6 +58,8 @@ int main(int argc, char **argv)
     pagerank();
 
     write_file(output_filename);
+
+    free_all();
 
     return 0;
 }
@@ -112,7 +117,7 @@ void *pagerank_calculate(void *arg)
 
                 from_index = curr->from_node_index;
 
-                if (nodes[from_index].outlinks_num != 0)
+                if (nodes[from_index].outlinks_num != 0) //no need, just safe
                     curr->transfer_score = nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
                 else
                     curr->transfer_score = 0;
@@ -148,6 +153,10 @@ double pagerank_link_sum(link_t *head)
     }
 
     return sum;
+}
+
+void free_all(){
+    pthread_barrier_destroy(&bar);
 }
 
 void read_file(char *filename)

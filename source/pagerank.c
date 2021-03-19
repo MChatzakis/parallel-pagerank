@@ -1,3 +1,12 @@
+/**
+ * @file pagerank.c
+ * @author Manos Chatzakis (chatzakis@ics.forth.gr)
+ * @brief Parallel pagerank implementation using POSIX threads
+ * @date 2021-03-19
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -6,13 +15,17 @@
 
 #include "graph/graph.h"
 
-#define LINE_SIZE 100
-#define ITERATIONS 50
-#define THREADS_NUM 1
-#define DEBUG 1
-#define D_FACTOR 0.85
-#define INIT_SCORE 1.0
+#define LINE_SIZE 100  /*Max line size of the input dataset*/
+#define ITERATIONS 50  /*Pagerank Iterations*/
+#define THREADS_NUM 2  /*Number of threads. It should be in the range [1,4]*/
+#define DEBUG 1        /*Enable of not debugging message prompts*/
+#define D_FACTOR 0.85  /*Dumping Factor*/
+#define INIT_SCORE 1.0 /*Initial pagerank score*/
 
+/**
+ * @brief Struct of thread data, to be passed to the thread function.
+ * 
+ */
 typedef struct thread_data_t
 {
     long from;
@@ -22,31 +35,73 @@ typedef struct thread_data_t
 pthread_t threads[THREADS_NUM];
 thread_data_t data[THREADS_NUM];
 
-pthread_barrier_t bar;
+pthread_barrier_t bar; /*Barrier to syncronize the threads to begin every iteration together*/
 
-graph_t *g;
+graph_t *g; /*Web graph simulation*/
 
+/**
+ * @brief Splits the graph and creates the threads to begin
+ * the pagerank calculation
+ * 
+ */
 void pagerank();
+
+/**
+ * @brief Reads the input datasets and initializes the graph.
+ * 
+ * @param filename The dataset filename
+ */
 void read_file(char *filename);
+
+/**
+ * @brief Writes the graph data to a file
+ * 
+ * @param filename The filename desired. It should have a ".csv" extension
+ */
 void write_file(char *filename);
+
+/**
+ * @brief Every thread runs this function to calculate the pagerank of 
+ * each node belonging to its corresponding pagerank pie.
+ * 
+ * @param arg The thread_data argument
+ * @return void* NULL
+ */
 void *pagerank_calculate(void *arg);
+
+/**
+ * @brief Traverses the neighbour list of a node and returns the sum of the
+ * score taken by every neighbour node.
+ * 
+ * @param head The head of the list
+ * @return double The sum taken from the neighbours
+ */
 double pagerank_link_sum(link_t *head);
 
+/**
+ * @brief -f stands for the filename, -h stands for help.
+ 
+ */
 int main(int argc, char **argv)
 {
-    int opt;
-    char *input_filename;
-    char *output_filename = "pagerank.csv";
+    int opt, count_time = 0;
+    double time_spent;
+    char *input_filename, *output_filename = "pagerank.csv";
+    struct timespec start, finish;
+    double elapsed;
 
-    while ((opt = getopt(argc, argv, "f:h")) != -1)
+    while ((opt = getopt(argc, argv, "f:th")) != -1)
     {
         switch (opt)
         {
         case 'f':
             input_filename = strdup(optarg);
             break;
+        case 't':
+            count_time = 1;
+            break;
         case 'h':
-            return 0;    
+            return 0;
         default:
             exit(EXIT_FAILURE);
         }
@@ -54,14 +109,21 @@ int main(int argc, char **argv)
 
     read_file(input_filename);
 
-    //pagerank();
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
-    //write_file(output_filename);
+    pagerank();
 
-    graph_print(g);
-    
+    clock_gettime(CLOCK_MONOTONIC, &finish);
+
+    elapsed = (finish.tv_sec - start.tv_sec);
+    elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+
+    if (count_time)
+        printf("Pagerank Calculation %f (s)\n", elapsed);
+
+    write_file(output_filename);
+
     free(input_filename);
-    
     graph_free(g);
     return 0;
 }
@@ -90,8 +152,8 @@ void pagerank()
         pthread_join(threads[i], NULL);
     }
 
+    graph_print(g);
     pthread_barrier_destroy(&bar);
-
 }
 
 void *pagerank_calculate(void *arg)
@@ -206,7 +268,6 @@ void read_file(char *filename)
 
     if (DEBUG)
         printf("Total nodes: %ld\n", g->size);
-
 
     graph_free_unused(g);
 

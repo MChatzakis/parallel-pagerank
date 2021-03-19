@@ -5,11 +5,13 @@ The folder is organizes as follows:
 
 Pagerank    
     |---|
+        |-metrics/ Contains all measurements
+        |
         |-source/ Contains the source code files and the input datasets
         |
         |-report/ Contains the report of the approach
         |
-        |-readme.md/ The readme file
+        |-readme.md The readme file
 
 ### Compilation:
 To compile the program you can use "make", supposing makefile and pagerank.c are in the same directory.

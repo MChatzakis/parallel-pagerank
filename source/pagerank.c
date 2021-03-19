@@ -8,7 +8,7 @@
 
 #define LINE_SIZE 100
 #define ITERATIONS 50
-#define THREADS_NUM 4
+#define THREADS_NUM 1
 #define DEBUG 1
 #define D_FACTOR 0.85
 #define INIT_SCORE 1.0
@@ -29,7 +29,6 @@ graph_t *g;
 void pagerank();
 void read_file(char *filename);
 void write_file(char *filename);
-void free_all();
 void *pagerank_calculate(void *arg);
 double pagerank_link_sum(link_t *head);
 
@@ -55,13 +54,15 @@ int main(int argc, char **argv)
 
     read_file(input_filename);
 
-    pagerank();
+    //pagerank();
 
-    write_file(output_filename);
+    //write_file(output_filename);
 
+    graph_print(g);
+    
     free(input_filename);
-    free_all();
-
+    
+    graph_free(g);
     return 0;
 }
 
@@ -89,7 +90,8 @@ void pagerank()
         pthread_join(threads[i], NULL);
     }
 
-    //graph_print(g);
+    pthread_barrier_destroy(&bar);
+
 }
 
 void *pagerank_calculate(void *arg)
@@ -131,7 +133,6 @@ void *pagerank_calculate(void *arg)
         for (i = data->from; i < data->to; i++)
         {
             score = pagerank_link_sum(nodes[i].inclinks_head);
-            //printf("Sum %f\n", score);
             if (nodes[i].outlinks_num != 0)
                 nodes[i].score = score + nodes[i].score * (1 - D_FACTOR);
             else
@@ -154,11 +155,6 @@ double pagerank_link_sum(link_t *head)
     }
 
     return sum;
-}
-
-void free_all(){
-    pthread_barrier_destroy(&bar);
-    graph_free(g);
 }
 
 void read_file(char *filename)
@@ -210,6 +206,9 @@ void read_file(char *filename)
 
     if (DEBUG)
         printf("Total nodes: %ld\n", g->size);
+
+
+    graph_free_unused(g);
 
     fclose(stream);
 }

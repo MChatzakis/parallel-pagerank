@@ -11,7 +11,22 @@ graph_t *graph_init(long max_size, double init_score)
     g->nodes = (node_t *)malloc(max_size * sizeof(node_t));
     g->size = 0;
     g->init_score = init_score;
+
     return g;
+}
+
+node_t *graph_free_unused(graph_t *g)
+{
+    assert(g);
+
+    g->nodes = (node_t *)realloc(g->nodes, g->size * sizeof(node_t));
+    if (!(g->nodes))
+    {
+        perror("Could not free up additional graph space");
+        exit(EXIT_FAILURE);
+    }
+
+    return g->nodes;
 }
 
 node_t *graph_add_link(graph_t *g, long from, long to)

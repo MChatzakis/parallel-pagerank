@@ -146,6 +146,7 @@ int main(int argc, char **argv)
     write_file(output_filename);
 
     free(input_filename);
+
     graph_free(g);
 
     return 0;

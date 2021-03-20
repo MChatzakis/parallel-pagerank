@@ -15,12 +15,12 @@
 
 #include "graph/graph.h"
 
-#define LINE_SIZE 100  /*Max line size of the input dataset*/
-#define ITERATIONS 50  /*Pagerank Iterations*/
-#define THREADS_NUM 3  /*Number of threads. It should be in the range [1,4]*/
-#define DEBUG 1        /*Enable of not debugging message prompts*/
-#define D_FACTOR 0.85  /*Dumping Factor*/
-#define INIT_SCORE 1.0 /*Initial pagerank score*/
+#define LINE_SIZE 100   /*Max line size of the input dataset*/
+#define ITERATIONS 50   /*Pagerank Iterations*/
+#define TOTAL_THREADS 4 /*Max number of threads to be used is 4*/
+#define DEBUG 1         /*Enable of not debugging message prompts*/
+#define D_FACTOR 0.85   /*Dumping Factor*/
+#define INIT_SCORE 1.0  /*Initial pagerank score*/
 
 /**
  * @brief Struct of thread data, to be passed to the thread function.
@@ -32,12 +32,13 @@ typedef struct thread_data_t
     long to;
 } thread_data_t;
 
-pthread_t threads[THREADS_NUM];
-thread_data_t data[THREADS_NUM];
+pthread_t threads[TOTAL_THREADS];
+thread_data_t data[TOTAL_THREADS];
 
 pthread_barrier_t bar; /*Barrier to syncronize the threads to begin every iteration together*/
 
-graph_t *g; /*Web graph simulation*/
+int THREADS_NUM = 1; /* Threads to be used */
+graph_t *g;          /*Web graph simulation*/
 
 /**
  * @brief Splits the graph and creates the threads to begin
@@ -83,7 +84,7 @@ double pagerank_link_sum(link_t *head);
 
 /**
  * @brief -f stands for the filename, -h stands for help.
- 
+ *
  */
 int main(int argc, char **argv)
 {
@@ -93,7 +94,7 @@ int main(int argc, char **argv)
     struct timespec start, finish;
     double elapsed;
 
-    while ((opt = getopt(argc, argv, "f:th")) != -1)
+    while ((opt = getopt(argc, argv, "f:t:mh")) != -1)
     {
         switch (opt)
         {
@@ -101,9 +102,25 @@ int main(int argc, char **argv)
             input_filename = strdup(optarg);
             break;
         case 't':
+            THREADS_NUM = atoi(optarg);
+            if (THREADS_NUM <= 0 || THREADS_NUM > 4)
+            {
+                printf("The thread number should be between 1 and 4!\n");
+                exit(EXIT_FAILURE);
+            }
+            printf("Number of threads: %d\n", THREADS_NUM);
+            break;
+        case 'm':
             count_time = 1;
             break;
         case 'h':
+            printf(
+                "Usage: ./page_rank -f file -t threads [-m]\n"
+                "Options:\n"
+                "   -f <string>         Specifies the filename of the dataset.\n"
+                "   -t <int>            Determines how many threads the algorithm will use. Must be in range of [1,4].\n"
+                "   -m                  When it is used, displays the time metrics about pagerank.\n"
+                "   -h                  Prints this help\n");
             return 0;
         default:
             exit(EXIT_FAILURE);
@@ -112,11 +129,13 @@ int main(int argc, char **argv)
 
     read_file(input_filename);
 
+    pthread_barrier_init(&bar, NULL, THREADS_NUM);
+
     clock_gettime(CLOCK_MONOTONIC, &start);
-
     pagerank();
-
     clock_gettime(CLOCK_MONOTONIC, &finish);
+
+    pthread_barrier_destroy(&bar);
 
     elapsed = (finish.tv_sec - start.tv_sec);
     elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
@@ -127,16 +146,14 @@ int main(int argc, char **argv)
     write_file(output_filename);
 
     free(input_filename);
-
     graph_free(g);
+
     return 0;
 }
 
 void pagerank()
 {
     long sets, i;
-
-    pthread_barrier_init(&bar, NULL, THREADS_NUM);
 
     sets = g->size / THREADS_NUM;
     for (i = 0; i < THREADS_NUM; i++)
@@ -156,8 +173,7 @@ void pagerank()
         pthread_join(threads[i], NULL);
     }
 
-    graph_print(g);
-    pthread_barrier_destroy(&bar);
+    //graph_print(g);
 }
 
 void *pagerank_calculate(void *arg)
@@ -165,6 +181,7 @@ void *pagerank_calculate(void *arg)
     thread_data_t *data;
     node_t *nodes, *neigh;
     link_t *curr, *n_curr;
+
     double score;
     long i, j, from_index;
 
@@ -185,16 +202,9 @@ void *pagerank_calculate(void *arg)
                 //printf("Link from %ld to %ld\n", nodes[curr->from_node_index].id, nodes[curr->to_node_index].id);
 
                 from_index = curr->from_node_index;
-
-                /*if (nodes[from_index].outlinks_num != 0) //no need, just safe
-                    curr->transfer_score = nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
-                else
-                    curr->transfer_score = 0;
-                */
-
                 /*nodes[from_index].outlinks in this case is always >= 1 */
-                curr->transfer_score = nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
-
+                //curr->transfer_score = nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
+                nodes[i].score_add += nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
                 curr = curr->next;
             }
         }
@@ -202,11 +212,14 @@ void *pagerank_calculate(void *arg)
         pthread_barrier_wait(&bar);
         for (i = data->from; i < data->to; i++)
         {
-            score = pagerank_link_sum(nodes[i].inclinks_head);
+            //score = pagerank_link_sum(nodes[i].inclinks_head);
+            score = nodes[i].score_add;
             if (nodes[i].outlinks_num != 0)
                 nodes[i].score = score + nodes[i].score * (1 - D_FACTOR);
             else
                 nodes[i].score = score + nodes[i].score;
+
+            nodes[i].score_add = 0.0;
         }
         pthread_barrier_wait(&bar);
     }

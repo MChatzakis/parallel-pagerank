@@ -34,6 +34,7 @@ typedef struct node_t
 {
     long id;
     double score;
+    double score_add;
 
     long outlinks_num;
     link_t *outlinks_head;

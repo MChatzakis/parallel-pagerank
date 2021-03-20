@@ -91,6 +91,9 @@ node_t *graph_add_link(graph_t *g, long from, long to)
         nodes[g->size].inclinks_num = 0;
         nodes[g->size].outlinks_head = NULL;
         nodes[g->size].inclinks_head = NULL;
+
+        nodes[g->size].score_add = 0.0;
+
         from_index = g->size;
         g->size++;
     }
@@ -139,7 +142,7 @@ node_t *graph_add_link(graph_t *g, long from, long to)
     {
         prev->next = link;
     }
-    
+
     nodes[from_index].outlinks_num++;
 
     curr = nodes[to_index].inclinks_head;
@@ -190,7 +193,7 @@ void graph_csv(graph_t *g, FILE *stream)
     for (i = 0; i < g->size; i++)
     {
         fprintf(stream, "%ld,", nodes[i].id);
-        fprintf(stream, "%.3f\n", nodes[i].score); /*3 decimals points are needed*/
+        fprintf(stream, "%f\n", nodes[i].score); /*3 decimals points are needed*/
     }
 }
 
@@ -199,7 +202,7 @@ void graph_print(graph_t *g)
     node_t *nodes;
     link_t *link;
     long i;
-
+    
     assert(g);
 
     nodes = g->nodes;
@@ -262,7 +265,7 @@ void graph_free(graph_t *g)
             link = link->next;
             free(f_link);
         }
-        
+
         nodes[i].outlinks_head = NULL;
     }
 

@@ -1,0 +1,10 @@
+TODO.txt
+
+
+1) Check the graph
+
+2) Run on csd
+
+3) Check output
+
+4) Report and stuff

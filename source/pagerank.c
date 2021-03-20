@@ -48,8 +48,11 @@ void pagerank();
 
 /**
  * @brief Reads the input datasets and initializes the graph.
- * 
  * @param filename The dataset filename
+ * 
+ * !The input file may represent a SIMPLE DIRECTED graph.
+ * !Lines of type srcID dstID with srcID == dstID ARE NOT supported.
+ * !Duplicate lines are also not supported.
  */
 void read_file(char *filename);
 
@@ -119,11 +122,12 @@ int main(int argc, char **argv)
     elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 
     if (count_time)
-        printf("Pagerank Calculation %f (s)\n", elapsed);
+        printf("Pagerank Calculation %fs\n", elapsed);
 
     write_file(output_filename);
 
     free(input_filename);
+
     graph_free(g);
     return 0;
 }
@@ -152,7 +156,7 @@ void pagerank()
         pthread_join(threads[i], NULL);
     }
 
-    //graph_print(g);
+    graph_print(g);
     pthread_barrier_destroy(&bar);
 }
 
@@ -182,10 +186,14 @@ void *pagerank_calculate(void *arg)
 
                 from_index = curr->from_node_index;
 
-                if (nodes[from_index].outlinks_num != 0) //no need, just safe
+                /*if (nodes[from_index].outlinks_num != 0) //no need, just safe
                     curr->transfer_score = nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
                 else
                     curr->transfer_score = 0;
+                */
+
+                /*nodes[from_index].outlinks in this case is always >= 1 */
+                curr->transfer_score = nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
 
                 curr = curr->next;
             }

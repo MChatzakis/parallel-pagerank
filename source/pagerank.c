@@ -17,7 +17,7 @@
 
 #define LINE_SIZE 100  /*Max line size of the input dataset*/
 #define ITERATIONS 50  /*Pagerank Iterations*/
-#define THREADS_NUM 2  /*Number of threads. It should be in the range [1,4]*/
+#define THREADS_NUM 3  /*Number of threads. It should be in the range [1,4]*/
 #define DEBUG 1        /*Enable of not debugging message prompts*/
 #define D_FACTOR 0.85  /*Dumping Factor*/
 #define INIT_SCORE 1.0 /*Initial pagerank score*/
@@ -152,7 +152,7 @@ void pagerank()
         pthread_join(threads[i], NULL);
     }
 
-    graph_print(g);
+    //graph_print(g);
     pthread_barrier_destroy(&bar);
 }
 

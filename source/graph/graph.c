@@ -89,9 +89,7 @@ node_t *graph_add_link(graph_t *g, long from, long to)
         nodes[g->size].score = g->init_score;
         nodes[g->size].outlinks_num = 0;
         nodes[g->size].inclinks_num = 0;
-        nodes[g->size].outlinks_head = NULL;
         nodes[g->size].inclinks_head = NULL;
-
         nodes[g->size].score_add = 0.0;
 
         from_index = g->size;
@@ -104,43 +102,11 @@ node_t *graph_add_link(graph_t *g, long from, long to)
         nodes[g->size].score = g->init_score;
         nodes[g->size].outlinks_num = 0;
         nodes[g->size].inclinks_num = 0;
-        nodes[g->size].outlinks_head = NULL;
         nodes[g->size].inclinks_head = NULL;
+        nodes[g->size].score_add = 0.0;
+
         to_index = g->size;
         g->size++;
-    }
-
-    /*
-        At this point, both src and dst exist
-        Thus, src is added to the incoming links of dst
-        and dst is added to the outgoing links of src
-    */
-    curr = nodes[from_index].outlinks_head;
-    prev = NULL;
-    while (curr != NULL)
-    {
-        prev = curr;
-        curr = curr->next;
-    }
-
-    link = (link_t *)malloc(sizeof(link_t));
-    if (!link)
-    {
-        perror("Could not add a new link");
-        exit(EXIT_FAILURE);
-    }
-    link->from_node_index = from_index;
-    link->to_node_index = to_index;
-    link->transfer_score = 0.0;
-    link->next = NULL;
-
-    if (prev == NULL)
-    {
-        nodes[from_index].outlinks_head = link;
-    }
-    else
-    {
-        prev->next = link;
     }
 
     nodes[from_index].outlinks_num++;
@@ -161,8 +127,6 @@ node_t *graph_add_link(graph_t *g, long from, long to)
     }
 
     link->from_node_index = from_index;
-    link->to_node_index = to_index;
-    link->transfer_score = 0.0;
     link->next = NULL;
 
     if (prev == NULL)
@@ -193,7 +157,7 @@ void graph_csv(graph_t *g, FILE *stream)
     for (i = 0; i < g->size; i++)
     {
         fprintf(stream, "%ld,", nodes[i].id);
-        fprintf(stream, "%f\n", nodes[i].score); /*3 decimals points are needed*/
+        fprintf(stream, "%f\n", nodes[i].score);
     }
 }
 
@@ -202,7 +166,7 @@ void graph_print(graph_t *g)
     node_t *nodes;
     link_t *link;
     long i;
-    
+
     assert(g);
 
     nodes = g->nodes;
@@ -212,15 +176,7 @@ void graph_print(graph_t *g)
     {
         printf("Node ID: %ld\n", nodes[i].id);
         printf("    Pagerank: %f\n", nodes[i].score);
-        printf("    Outdegree: %ld\n        => [ ", nodes[i].outlinks_num);
-
-        link = nodes[i].outlinks_head;
-        while (link != NULL)
-        {
-            printf("%ld ", nodes[link->to_node_index].id);
-            link = link->next;
-        }
-        printf("]\n");
+        printf("    Outdegree: %ld\n", nodes[i].outlinks_num);
         printf("    Incdegree: %ld\n        => [ ", nodes[i].inclinks_num);
 
         link = nodes[i].inclinks_head;
@@ -229,7 +185,6 @@ void graph_print(graph_t *g)
             printf("%ld ", nodes[link->from_node_index].id);
             link = link->next;
         }
-
         printf("]\n");
     }
 }
@@ -242,9 +197,6 @@ void graph_free(graph_t *g)
 
     assert(g);
 
-    /*
-        For every node[i], the incoming and outgoing link list is freed
-    */
     nodes = g->nodes;
     for (i = 0; i < g->size; i++)
     {
@@ -257,16 +209,6 @@ void graph_free(graph_t *g)
         }
 
         nodes[i].inclinks_head = NULL;
-
-        link = nodes[i].outlinks_head;
-        while (link != NULL)
-        {
-            f_link = link;
-            link = link->next;
-            free(f_link);
-        }
-
-        nodes[i].outlinks_head = NULL;
     }
 
     free(g->nodes);

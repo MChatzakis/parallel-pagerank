@@ -38,7 +38,7 @@ thread_data_t data[TOTAL_THREADS];
 pthread_barrier_t bar; /*Barrier to syncronize the threads to begin every iteration together*/
 
 int THREADS_NUM = 1; /* Threads to be used */
-graph_t *g;          /*Web graph simulation*/
+graph_t *g;          /* Web graph simulation */
 
 /**
  * @brief Splits the graph and creates the threads to begin
@@ -51,9 +51,6 @@ void pagerank();
  * @brief Reads the input datasets and initializes the graph.
  * @param filename The dataset filename
  * 
- * !The input file may represent a SIMPLE DIRECTED graph.
- * !Lines of type srcID dstID with srcID == dstID ARE NOT supported.
- * !Duplicate lines are also not supported.
  */
 void read_file(char *filename);
 
@@ -88,13 +85,12 @@ double pagerank_link_sum(link_t *head);
  */
 int main(int argc, char **argv)
 {
-    int opt, count_time = 0;
-    double time_spent;
+    int opt, count_time = 0, print_graph = 0;
     char *input_filename, *output_filename = "pagerank.csv";
     struct timespec start, finish;
     double elapsed;
 
-    while ((opt = getopt(argc, argv, "f:t:mh")) != -1)
+    while ((opt = getopt(argc, argv, "f:t:mgh")) != -1)
     {
         switch (opt)
         {
@@ -113,6 +109,9 @@ int main(int argc, char **argv)
         case 'm':
             count_time = 1;
             break;
+        case 'g':
+            print_graph = 1;
+            break;
         case 'h':
             printf(
                 "Usage: ./page_rank -f file -t threads [-m]\n"
@@ -120,6 +119,7 @@ int main(int argc, char **argv)
                 "   -f <string>         Specifies the filename of the dataset.\n"
                 "   -t <int>            Determines how many threads the algorithm will use. Must be in range of [1,4].\n"
                 "   -m                  When it is used, displays the time metrics about pagerank.\n"
+                "   -g                  When -g is set, the graph structure is printed to stdout.\n"
                 "   -h                  Prints this help\n");
             return 0;
         default:
@@ -140,15 +140,16 @@ int main(int argc, char **argv)
     elapsed = (finish.tv_sec - start.tv_sec);
     elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 
+    if (print_graph)
+        graph_print(g);
+
     if (count_time)
         printf("Pagerank Calculation %fs\n", elapsed);
 
     write_file(output_filename);
 
     free(input_filename);
-
     graph_free(g);
-
     return 0;
 }
 
@@ -173,8 +174,6 @@ void pagerank()
     {
         pthread_join(threads[i], NULL);
     }
-
-    //graph_print(g);
 }
 
 void *pagerank_calculate(void *arg)
@@ -196,15 +195,10 @@ void *pagerank_calculate(void *arg)
         for (i = data->from; i < data->to; i++)
         {
             //printf("Node %ld:\n", nodes[i].id);
-
             curr = nodes[i].inclinks_head;
             while (curr != NULL)
             {
-                //printf("Link from %ld to %ld\n", nodes[curr->from_node_index].id, nodes[curr->to_node_index].id);
-
                 from_index = curr->from_node_index;
-                /*nodes[from_index].outlinks in this case is always >= 1 */
-                //curr->transfer_score = nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
                 nodes[i].score_add += nodes[from_index].score * D_FACTOR / nodes[from_index].outlinks_num;
                 curr = curr->next;
             }
@@ -213,7 +207,6 @@ void *pagerank_calculate(void *arg)
         pthread_barrier_wait(&bar);
         for (i = data->from; i < data->to; i++)
         {
-            //score = pagerank_link_sum(nodes[i].inclinks_head);
             score = nodes[i].score_add;
             if (nodes[i].outlinks_num != 0)
                 nodes[i].score = score + nodes[i].score * (1 - D_FACTOR);
@@ -224,21 +217,6 @@ void *pagerank_calculate(void *arg)
         }
         pthread_barrier_wait(&bar);
     }
-}
-
-double pagerank_link_sum(link_t *head)
-{
-    link_t *curr;
-    double sum = 0;
-
-    curr = head;
-    while (curr != NULL)
-    {
-        sum += curr->transfer_score;
-        curr = curr->next;
-    }
-
-    return sum;
 }
 
 void read_file(char *filename)

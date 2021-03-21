@@ -19,10 +19,6 @@
 typedef struct link_t
 {
     long from_node_index;
-    long to_node_index;
-
-    double transfer_score;
-
     struct link_t *next;
 } link_t;
 
@@ -33,18 +29,18 @@ typedef struct link_t
 typedef struct node_t
 {
     long id;
+
     double score;
     double score_add;
 
     long outlinks_num;
-    link_t *outlinks_head;
-
     long inclinks_num;
+    
     link_t *inclinks_head;
 } node_t;
 
 /**
- * @brief Graph abtraction
+ * @brief Graph abstraction
  * 
  */
 typedef struct graph_t

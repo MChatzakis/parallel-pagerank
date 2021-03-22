@@ -7,7 +7,7 @@ pagerank: \
 ----metrics \
 ----source \
 ----report \
-----readme.md \
+----readme.md
 
 ### Compilation:
 To compile the program you can use "make", supposing makefile and pagerank.c are in the same directory.

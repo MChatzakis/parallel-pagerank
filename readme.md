@@ -3,7 +3,7 @@ Manos Chatzakis (csd4238@csd.uoc.gr)
 
 The folder is organized as follows:
 
-pagerank: \  
+pagerank:   
 ----metrics \
 ----source \
 ----report \

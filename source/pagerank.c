@@ -104,7 +104,7 @@ int main(int argc, char **argv)
                 printf("The thread number should be between 1 and 4!\n");
                 exit(EXIT_FAILURE);
             }
-            printf("Number of threads: %d\n", THREADS_NUM);
+            printf("Threads: %d\n", THREADS_NUM);
             break;
         case 'm':
             count_time = 1;
@@ -167,7 +167,11 @@ void pagerank()
             data[THREADS_NUM - 1].to = g->size;
 
         //printf("Thread %ld processes node[%ld] to node[%ld]\n", i, data[i].from, (data[i].to - 1));
-        pthread_create(&threads[i], NULL, pagerank_calculate, &data[i]);
+        if (pthread_create(&threads[i], NULL, pagerank_calculate, &data[i]))
+        {
+            perror("Could not create the threads");
+            exit(EXIT_FAILURE);
+        }
     }
 
     for (i = 0; i < THREADS_NUM; i++)
@@ -217,6 +221,8 @@ void *pagerank_calculate(void *arg)
         }
         pthread_barrier_wait(&bar);
     }
+
+    pthread_exit(NULL);
 }
 
 void read_file(char *filename)

@@ -10,7 +10,8 @@ pagerank:
 ----readme.md
 
 ### Compilation:
-To compile the program you can use "make", supposing makefile and pagerank.c are in the same directory.
+To compile the program you can use "make", supposing makefile and pagerank.c are in the same directory.\
+Make targets are: {all,gcc,clean}
 
 ### Run:
 To run an instance of the program, use: \
@@ -30,5 +31,5 @@ It ignores comment lines, which are the line that start with "#".
 ### Output File:
 A csv file following the described format is produced in the same directory with the executable as "pagerank.csv"
 
-### Report - Measurements
-A brief report presenting the development method and the measurements is provided.
+### Report:
+A brief report presenting the development method and measurements is provided.

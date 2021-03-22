@@ -1,38 +1,35 @@
 # Pagerank: A Parallel Approach
 Manos Chatzakis (csd4238@csd.uoc.gr)
 
-The folder is organizes as follows:
+The folder is organized as follows:
 
-Pagerank    
-    |---|
-        |-metrics/ Contains all measurements
-        |
-        |-source/ Contains the source code files and the input datasets
-        |
-        |-report/ Contains the report of the approach
-        |
-        |-readme.md The readme file
+pagerank: \  
+----metrics/ Measurements \
+----source/ Source code and iput files \
+----report/ Report (PDF and TEX) \
+----readme.md/ This file \
 
 ### Compilation:
 To compile the program you can use "make", supposing makefile and pagerank.c are in the same directory.
 
 ### Run:
-To run the program, you may use the following pattern: \
-$ ./page_rank -f "your_dataset.txt" \
-And to measure the time: \
-$ time ./page_rank -f "your_dataset.txt" \
-(Other make commands: make + {run, gcc, clean})
+To run an instance of the program, use: \
+$./page_rank -f input_dataset -m -t threads \
+To see all possible configurations, type:\
+$./page_rank -h
 
-### Selecting the threads:
-You can change the "#define THREADS_NUM N" at the top of pagerank.c file.
+eg: \
+$./page_rank -f datasets/enron.txt -m -t 2 \
+
+will run the program with 2 threads for the enron dataset and it will print the total time for pagerank calculation.
 
 ### Supported Dataset Format:
 The code can parse any dataset provided the follow the following format: \
 SrcID DstID \
-It ignores comment lines, which are the line that -START- with "#".
+It ignores comment lines, which are the line that start with "#".
 
 ### Output File:
-A csv file following the described format is producer in the same directory with the .c file, with name "pagerank.csv"
+A csv file following the described format is produced in the same directory with the executable as "pagerank.csv"
 
 ### Report - Measurements
-A simple report describing the general development tactic is provided, separated in sections, where the method used is analyzed and the measurements are presented.
+A brief report presenting the development method and the measurements is provided.

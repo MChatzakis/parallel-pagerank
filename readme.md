@@ -4,10 +4,10 @@ Manos Chatzakis (csd4238@csd.uoc.gr)
 The folder is organized as follows:
 
 pagerank: \  
-----metrics/ Measurements \
-----source/ Source code and iput files \
-----report/ Report (PDF and TEX) \
-----readme.md/ This file \
+----metrics \
+----source \
+----report \
+----readme.md \
 
 ### Compilation:
 To compile the program you can use "make", supposing makefile and pagerank.c are in the same directory.
@@ -20,7 +20,6 @@ $./page_rank -h
 
 eg: \
 $./page_rank -f datasets/enron.txt -m -t 2 \
-
 will run the program with 2 threads for the enron dataset and it will print the total time for pagerank calculation.
 
 ### Supported Dataset Format:

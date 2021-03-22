@@ -157,7 +157,7 @@ void graph_csv(graph_t *g, FILE *stream)
     for (i = 0; i < g->size; i++)
     {
         fprintf(stream, "%ld,", nodes[i].id);
-        fprintf(stream, "%f\n", nodes[i].score);
+        fprintf(stream, "%.3f\n", nodes[i].score);
     }
 }
 

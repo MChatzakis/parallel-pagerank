@@ -3,7 +3,8 @@ Manos Chatzakis (csd4238@csd.uoc.gr)
 
 The folder is organized as follows:
 
-pagerank:   
+pagerank:  
+----datasets \
 ----metrics \
 ----source \
 ----report \
@@ -26,7 +27,7 @@ will run the program with 2 threads for the enron dataset and it will print the 
 ### Supported Dataset Format:
 The code can parse any dataset provided the follow the following format: \
 SrcID DstID \
-It ignores comment lines, which are the line that start with "#".
+It ignores comment lines, which are the lines that start with "#".
 
 ### Output File:
 A csv file following the described format is produced in the same directory with the executable as "pagerank.csv"

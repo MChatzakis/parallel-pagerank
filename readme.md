@@ -26,7 +26,7 @@ will run the program with 2 threads for the enron dataset and it will print the 
 
 ### Supported Dataset Format:
 The code can parse any dataset provided the follow the following format: \
-SrcID DstID \
+SrcID DstID //no self loops allowed\
 It ignores comment lines, which are the lines that start with "#".
 
 ### Output File:
